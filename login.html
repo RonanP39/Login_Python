@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Login - Seguro e Confiável</title>
+    <link rel="stylesheet" href="login-style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="lock-icon">🔐</span>
+                <h1>SecureLogin</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Login Form -->
+            <div class="form-container active" id="loginForm">
+                <h2>Fazer Login</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginUsername">Nome de usuário</label>
+                        <input type="text" id="loginUsername" placeholder="Digite seu nome de usuário" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginPassword">Senha</label>
+                        <div class="password-input">
+                            <input type="password" id="loginPassword" placeholder="Digite sua senha" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Entrar</button>
+                </form>
+
+                <div class="form-footer">
+                    <p>Não tem conta? <a href="#" onclick="switchForm('registerForm')">Registre-se aqui</a></p>
+                    <p><a href="#" onclick="switchForm('recoveryForm')">Esqueceu a senha?</a></p>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div class="form-container" id="registerForm">
+                <h2>Criar Conta</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="registerUsername">Nome de usuário</label>
+                        <input type="text" id="registerUsername" placeholder="3-20 caracteres (letras, números, _)"
+                            pattern="^[a-zA-Z0-9_]{3,20}$" required>
+                        <small>Apenas letras, números e underscore</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerPassword">Senha</label>
+                        <div class="password-input">
+                            <input type="password" id="registerPassword"
+                                placeholder="Mín. 6 caracteres, 1 maiúscula, 1 número" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('registerPassword')">
+                                👁️
+                            </button>
+                        </div>
+                        <small>Mínimo 6 caracteres, incluindo letra maiúscula e número</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmar Senha</label>
+                        <div class="password-input">
+                            <input type="password" id="confirmPassword" placeholder="Confirme a senha" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </form>
+
+                <div class="form-footer">
+                    <p>Já tem conta? <a href="#" onclick="switchForm('loginForm')">Faça login aqui</a></p>
+                </div>
+            </div>
+
+            <!-- Recovery Form -->
+            <div class="form-container" id="recoveryForm">
+                <h2>Recuperar Senha</h2>
+                <div id="recoveryStep1" class="recovery-step">
+                    <form onsubmit="handleRecoveryInit(event)">
+                        <div class="form-group">
+                            <label for="recoveryUsername">Nome de usuário</label>
+                            <input type="text" id="recoveryUsername" placeholder="Digite seu nome de usuário" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recoveryEmail">Email</label>
+                            <input type="email" id="recoveryEmail" placeholder="seu@email.com" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Próximo</button>
+                    </form>
+                </div>
+
+                <div id="recoveryStep2" class="recovery-step" style="display: none;">
+                    <h3>Responda as Perguntas de Segurança</h3>
+                    <div id="questionsContainer"></div>
+                    <button class="btn btn-primary" onclick="handleRecoveryQuestions()">Verificar Respostas</button>
+                    <button class="btn btn-secondary" onclick="resetRecovery()">Voltar</button>
+                </div>
+
+                <div id="recoveryStep3" class="recovery-step" style="display: none;">
+                    <form onsubmit="handleNewPassword(event)">
+                        <div class="form-group">
+                            <label for="newPassword">Nova Senha</label>
+                            <div class="password-input">
+                                <input type="password" id="newPassword"
+                                    placeholder="Mín. 6 caracteres, 1 maiúscula, 1 número" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('newPassword')">
+                                    👁️
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirmar Nova Senha</label>
+                            <div class="password-input">
+                                <input type="password" id="confirmNewPassword" placeholder="Confirme a senha" required>
+                                <button type="button" class="toggle-password"
+                                    onclick="togglePassword('confirmNewPassword')">
+                                    👁️
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Resetar Senha</button>
+                    </form>
+                </div>
+
+                <div class="form-footer">
+                    <p><a href="#" onclick="switchForm('loginForm')">Voltar ao login</a></p>
+                </div>
+            </div>
+
+            <!-- Security Questions Form -->
+            <div class="form-container" id="securityForm">
+                <h2>Configurar Perguntas de Segurança</h2>
+                <form onsubmit="handleSecurityQuestions(event)">
+                    <div class="form-group">
+                        <label for="secUsername">Nome de usuário</label>
+                        <input type="text" id="secUsername" placeholder="Digite seu nome de usuário" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="secPassword">Senha</label>
+                        <div class="password-input">
+                            <input type="password" id="secPassword" placeholder="Digite sua senha" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('secPassword')">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="questionsInputContainer">
+                        <h3>Defina suas Perguntas de Segurança</h3>
+                        <div class="question-block">
+                            <div class="form-group">
+                                <label>Pergunta 1</label>
+                                <input type="text" class="security-question"
+                                    placeholder="Ex: Qual é o nome do seu primeiro animal de estimação?" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Resposta 1</label>
+                                <input type="text" class="security-answer" placeholder="Digite a resposta" required>
+                            </div>
+                        </div>
+
+                        <div class="question-block">
+                            <div class="form-group">
+                                <label>Pergunta 2</label>
+                                <input type="text" class="security-question"
+                                    placeholder="Ex: Em qual cidade você nasceu?" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Resposta 2</label>
+                                <input type="text" class="security-answer" placeholder="Digite a resposta" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Salvar Perguntas</button>
+                </form>
+
+                <div class="form-footer">
+                    <p><a href="#" onclick="switchForm('loginForm')">Voltar ao login</a></p>
+                </div>
+            </div>
+
+            <!-- Message Alert -->
+            <div id="messageAlert" class="alert" style="display: none;"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 SecureLogin. Todos os direitos reservados.</p>
+            <p>Sistema seguro com criptografia SHA-256</p>
+        </footer>
+    </div>
+
+    <script src="login-script.js"></script>
+</body>
+
+</html>
