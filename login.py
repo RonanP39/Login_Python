@@ -85,7 +85,7 @@ class LoginSystem:
         # Validar senha
         is_valid_password, msg = self._validate_password(password)
         if not is_valid_password:
-            return msg, msg
+            return False, msg
         
         # Verificar se usuário já existe
         if username in self.users:
@@ -254,6 +254,7 @@ class LoginSystem:
         
         return True, questions, recovery_code[0] if recovery_code else None
     
+    def login(self, username: str, password: str) -> Tuple[bool, str]:
         """Faz login de um usuário"""
         if username not in self.users:
             return False, "Usuário não encontrado"
@@ -408,6 +409,7 @@ def main():
             
             success, message, recovery_code = system.initiate_recovery(username, email)
             if success:
+                assert recovery_code is not None
                 print(f"\n✓ {message}")
                 print(f"\nCódigo de recuperação: {recovery_code}")
                 print("(Este código expirador em 15 minutos)")
