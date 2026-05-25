@@ -68,12 +68,24 @@
                         <label for="registerPassword">Senha</label>
                         <div class="password-input">
                             <input type="password" id="registerPassword"
-                                placeholder="Mín. 6 caracteres, 1 maiúscula, 1 número" required>
+                                placeholder="Mín. 6 caracteres, 1 maiúscula, 1 número" required
+                                oninput="updateStrengthIndicator(this.value)">
                             <button type="button" class="toggle-password" onclick="togglePassword('registerPassword')">
                                 👁️
                             </button>
                         </div>
                         <small>Mínimo 6 caracteres, incluindo letra maiúscula e número</small>
+                        <div class="password-strength">
+                            <div class="strength-bar" id="strengthBar"></div>
+                        </div>
+                        <span class="strength-label" id="strengthLabel"></span>
+                        <ul class="password-checklist" id="passwordChecklist">
+                            <li id="check-length" class="check-item"><span class="check-icon">✗</span> Mínimo 6
+                                caracteres</li>
+                            <li id="check-upper" class="check-item"><span class="check-icon">✗</span> Uma letra
+                                maiúscula</li>
+                            <li id="check-number" class="check-item"><span class="check-icon">✗</span> Um número</li>
+                        </ul>
                     </div>
 
                     <div class="form-group">
@@ -109,19 +121,21 @@
                             <input type="email" id="recoveryEmail" placeholder="seu@email.com" required>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Próximo</button>
+                        <button type="submit" class="btn btn-primary">Enviar link</button>
                     </form>
                 </div>
 
                 <div id="recoveryStep2" class="recovery-step" style="display: none;">
-                    <h3>Responda as Perguntas de Segurança</h3>
-                    <div id="questionsContainer"></div>
-                    <button class="btn btn-primary" onclick="handleRecoveryQuestions()">Verificar Respostas</button>
-                    <button class="btn btn-secondary" onclick="resetRecovery()">Voltar</button>
-                </div>
+                    <h3>Link de redefinição enviado</h3>
+                    <p id="recoveryMessage">Verifique seu email para encontrar o link de redefinição.</p>
+                    <div id="recoveryLinkDisplay" class="link-box"></div>
 
-                <div id="recoveryStep3" class="recovery-step" style="display: none;">
                     <form onsubmit="handleNewPassword(event)">
+                        <div class="form-group">
+                            <label for="recoveryToken">Código de recuperação</label>
+                            <input type="text" id="recoveryToken" placeholder="Digite o código recebido" required>
+                        </div>
+
                         <div class="form-group">
                             <label for="newPassword">Nova Senha</label>
                             <div class="password-input">
@@ -144,63 +158,11 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Resetar Senha</button>
+                        <button type="submit" class="btn btn-primary">Redefinir Senha</button>
                     </form>
+
+                    <button class="btn btn-secondary" onclick="resetRecovery()">Cancelar</button>
                 </div>
-
-                <div class="form-footer">
-                    <p><a href="#" onclick="switchForm('loginForm')">Voltar ao login</a></p>
-                </div>
-            </div>
-
-            <!-- Security Questions Form -->
-            <div class="form-container" id="securityForm">
-                <h2>Configurar Perguntas de Segurança</h2>
-                <form onsubmit="handleSecurityQuestions(event)">
-                    <div class="form-group">
-                        <label for="secUsername">Nome de usuário</label>
-                        <input type="text" id="secUsername" placeholder="Digite seu nome de usuário" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="secPassword">Senha</label>
-                        <div class="password-input">
-                            <input type="password" id="secPassword" placeholder="Digite sua senha" required>
-                            <button type="button" class="toggle-password" onclick="togglePassword('secPassword')">
-                                👁️
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="questionsInputContainer">
-                        <h3>Defina suas Perguntas de Segurança</h3>
-                        <div class="question-block">
-                            <div class="form-group">
-                                <label>Pergunta 1</label>
-                                <input type="text" class="security-question"
-                                    placeholder="Ex: Qual é o nome do seu primeiro animal de estimação?" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Resposta 1</label>
-                                <input type="text" class="security-answer" placeholder="Digite a resposta" required>
-                            </div>
-                        </div>
-
-                        <div class="question-block">
-                            <div class="form-group">
-                                <label>Pergunta 2</label>
-                                <input type="text" class="security-question"
-                                    placeholder="Ex: Em qual cidade você nasceu?" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Resposta 2</label>
-                                <input type="text" class="security-answer" placeholder="Digite a resposta" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Salvar Perguntas</button>
-                </form>
 
                 <div class="form-footer">
                     <p><a href="#" onclick="switchForm('loginForm')">Voltar ao login</a></p>
@@ -219,6 +181,34 @@
     </div>
 
     <script src="login-script.js"></script>
+    <script>
+        (function () {
+            const card = document.querySelector('.container');
+            const MAX_TILT = 8;
+
+            document.body.addEventListener('mousemove', function (e) {
+                const rect = card.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const dx = (e.clientX - cx) / (window.innerWidth / 2);
+                const dy = (e.clientY - cy) / (window.innerHeight / 2);
+                const rotX = -dy * MAX_TILT;
+                const rotY = dx * MAX_TILT;
+                card.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(0)`;
+                card.style.boxShadow = `
+                    ${-rotY * 2}px ${rotX * 2}px 8px rgba(0,0,0,0.08),
+                    ${-rotY * 4}px ${rotX * 4}px 24px rgba(0,0,0,0.12),
+                    ${-rotY * 6}px ${rotX * 6}px 56px rgba(79,70,229,0.22),
+                    0 48px 80px rgba(0,0,0,0.10)
+                `;
+            });
+
+            document.body.addEventListener('mouseleave', function () {
+                card.style.transform = 'rotateX(0deg) rotateY(0deg) translateZ(0)';
+                card.style.boxShadow = '';
+            });
+        })();
+    </script>
 </body>
 
 </html>

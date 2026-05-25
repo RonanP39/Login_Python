@@ -143,22 +143,17 @@ class LoginSystem:
         if user['email'] != email:
             return False, "Email incorreto", None
         
-        # Verificar se tem perguntas de segurança definidas
-        if 'security_questions' not in user:
-            return False, "Nenhuma pergunta de segurança definida. Configure-as primeiro.", None
-        
-        # Gerar código de recuperação
+        # Gerar código de recuperação e enviar o link por email (simulado)
         recovery_code = secrets.token_urlsafe(16)
         expiration = datetime.now() + timedelta(minutes=15)
         
         self.recovery_codes[recovery_code] = {
             'username': username,
-            'expires_at': expiration.isoformat(),
-            'verified': False
+            'expires_at': expiration.isoformat()
         }
         
         # Retornar o código (em produção, seria enviado por email)
-        return True, "Recuperação iniciada. Use o código fornecido.", recovery_code
+        return True, "Recuperação iniciada. Um link de redefinição foi enviado ao email cadastrado.", recovery_code
     
     def verify_security_questions(self, recovery_code: str, answers: Dict[str, str]) -> Tuple[bool, str]:
         """Verifica as respostas às perguntas de segurança"""
@@ -198,15 +193,11 @@ class LoginSystem:
         return True, "Perguntas de segurança respondidas corretamente!"
     
     def reset_password(self, recovery_code: str, new_password: str) -> Tuple[bool, str]:
-        """Reseta a senha com código de recuperação verificado"""
+        """Reseta a senha com um código de recuperação válido"""
         if recovery_code not in self.recovery_codes:
             return False, "Código de recuperação inválido"
         
         recovery = self.recovery_codes[recovery_code]
-        
-        # Verificar se foi verificado
-        if not recovery['verified']:
-            return False, "Responda as perguntas de segurança primeiro"
         
         # Verificar expiração
         if datetime.fromisoformat(recovery['expires_at']) < datetime.now():
