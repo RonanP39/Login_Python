@@ -190,15 +190,10 @@ body::after {
 
 .form-container {
     display: none;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    transform: translateY(12px);
-    opacity: 0;
 }
 
 .form-container.active {
     display: block;
-    opacity: 1;
-    transform: translateY(0);
 }
 
 .form-group {
