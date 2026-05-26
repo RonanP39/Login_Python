@@ -615,3 +615,306 @@ body::after {
     width: 14px;
     text-align: center;
 }
+
+/* ========== THEME TOGGLE ========== */
+.theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.2s ease, transform 0.2s ease;
+    z-index: 2;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.1);
+}
+
+/* ========== REMEMBER ME ========== */
+.remember-group {
+    margin-bottom: 14px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.92rem;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #4f5ce4;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ========== ATTEMPT COUNTER ========== */
+.attempt-counter {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #f97316;
+    text-align: center;
+    min-height: 1.2em;
+}
+
+.attempt-counter.blocked {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* ========== LOADING BUTTON ========== */
+.btn--loading {
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.btn--loading::after {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.65s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========== DASHBOARD ========== */
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0 4px;
+    text-align: center;
+}
+
+.dashboard-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f5ce4, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(79, 92, 228, 0.4);
+    margin-bottom: 4px;
+}
+
+.dashboard-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #f8fbff;
+    margin: 0;
+}
+
+.dashboard-email {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin: 14px 0 4px;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: 0.85rem;
+    color: #f8fbff;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* ========== LIGHT MODE ========== */
+[data-theme="light"] body {
+    background: radial-gradient(circle at top center, rgba(199, 210, 254, 0.7), transparent 30%),
+        linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%);
+    color: #1e293b;
+}
+
+[data-theme="light"] .container {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 28px 90px rgba(79, 70, 229, 0.12);
+}
+
+[data-theme="light"] .header {
+    background: rgba(255, 255, 255, 0.6);
+    border-bottom-color: rgba(99, 102, 241, 0.12);
+    color: #1e293b;
+}
+
+[data-theme="light"] .header h1,
+[data-theme="light"] .header h2 {
+    color: #1e293b;
+}
+
+[data-theme="light"] .theme-toggle {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .form-group label {
+    color: #374151;
+}
+
+[data-theme="light"] .form-group small {
+    color: #64748b;
+}
+
+[data-theme="light"] .form-group input {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #1e293b;
+}
+
+[data-theme="light"] .form-group input::placeholder {
+    color: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .form-group input:hover,
+[data-theme="light"] .form-group input:focus {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(79, 70, 229, 0.6);
+}
+
+[data-theme="light"] .toggle-password {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #4f46e5;
+}
+
+[data-theme="light"] .checkbox-label {
+    color: #374151;
+}
+
+[data-theme="light"] .form-footer {
+    color: #475569;
+}
+
+[data-theme="light"] .form-footer a {
+    color: #4f46e5;
+}
+
+[data-theme="light"] .social-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+}
+
+[data-theme="light"] .btn-secondary {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+}
+
+[data-theme="light"] .alert-success {
+    color: #14532d;
+}
+
+[data-theme="light"] .alert-error {
+    color: #7f1d1d;
+}
+
+[data-theme="light"] .alert-info {
+    color: #1d4ed8;
+}
+
+[data-theme="light"] .link-box {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(99, 102, 241, 0.25);
+    color: #1e293b;
+}
+
+[data-theme="light"] .link-box a {
+    color: #4f46e5;
+}
+
+[data-theme="light"] .footer {
+    background: rgba(0, 0, 0, 0.04);
+    border-top-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .dashboard-name {
+    color: #1e293b;
+}
+
+[data-theme="light"] .dashboard-email {
+    color: #64748b;
+}
+
+[data-theme="light"] .stat-item {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .stat-value {
+    color: #1e293b;
+}
+
+[data-theme="light"] .stat-label {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .password-strength {
+    background: #e2e8f0;
+}
+
+[data-theme="light"] .check-item {
+    color: rgba(220, 38, 38, 0.9);
+}
+
+[data-theme="light"] .check-item.valid {
+    color: #15803d;
+}

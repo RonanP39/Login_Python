@@ -1,26 +1,203 @@
-const STORAGE_KEY = 'secureLoginUsers';
-const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
-const MIN_PASSWORD_LENGTH = 6;
+'use strict';
 
 let currentRecoveryToken = null;
 
-// ========== LOCAL STORAGE ==========
-function getStoredUsers() {
+// ========== API HELPER ==========
+async function api(endpoint, body = null) {
     try {
-        const json = localStorage.getItem(STORAGE_KEY);
-        return json ? JSON.parse(json) : {};
-    } catch (error) {
-        console.error('Erro ao ler usuários:', error);
-        return {};
+        const opts = {
+            method: body !== null ? 'POST' : 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        };
+        if (body !== null) opts.body = JSON.stringify(body);
+        const res = await fetch(endpoint, opts);
+        const data = await res.json();
+        return { ok: res.ok, status: res.status, ...data };
+    } catch {
+        return { ok: false, message: 'Erro de conexão. Verifique se o servidor está rodando.' };
     }
 }
 
-function saveUsers(users) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+// ========== INIT ==========
+async function init() {
+    applyTheme();
+    const result = await api('/api/me');
+    if (result.ok && result.user) {
+        showDashboard(result.user);
+    } else {
+        switchForm('loginForm');
+    }
 }
 
-// ========== UI NOTIFICATIONS ==========
+// ========== AUTH HANDLERS ==========
+async function handleLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const remember = document.getElementById('rememberMe').checked;
+
+    setButtonLoading(event.target, true);
+    const result = await api('/api/login', { username, password, remember });
+    setButtonLoading(event.target, false);
+
+    if (result.ok) {
+        document.getElementById('attemptCounter').textContent = '';
+        showMessage(result.message, 'success');
+        showDashboard(result.user);
+    } else {
+        showMessage(result.message, 'error');
+        updateAttemptCounter(result.attempts);
+    }
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (password !== confirmPassword) {
+        showMessage('As senhas não coincidem.', 'error');
+        return;
+    }
+
+    setButtonLoading(event.target, true);
+    const result = await api('/api/register', { username, email, password });
+    setButtonLoading(event.target, false);
+
+    showMessage(result.message, result.ok ? 'success' : 'error');
+    if (result.ok) switchForm('loginForm');
+}
+
+async function handleRecoveryInit(event) {
+    event.preventDefault();
+    const username = document.getElementById('recoveryUsername').value.trim();
+    const email = document.getElementById('recoveryEmail').value.trim();
+
+    setButtonLoading(event.target, true);
+    const result = await api('/api/recovery/init', { username, email });
+    setButtonLoading(event.target, false);
+
+    if (result.ok && result.token) {
+        currentRecoveryToken = result.token;
+        const safeEmail = escapeHtml(email);
+        const safeToken = escapeHtml(result.token);
+        document.getElementById('recoveryLinkDisplay').innerHTML = `
+            <p class="small">Código simulado enviado para <strong>${safeEmail}</strong>:</p>
+            <a href="#" onclick="applyRecoveryLink('${safeToken}'); return false;">
+                https://example.com/redefinir-senha?token=${safeToken}
+            </a>
+        `;
+        document.getElementById('recoveryMessage').textContent =
+            `Link enviado para ${email}. Use o código ou clique no link.`;
+        document.getElementById('recoveryStep1').style.display = 'none';
+        document.getElementById('recoveryStep2').style.display = 'block';
+    } else {
+        showMessage(result.message, 'error');
+    }
+}
+
+async function handleNewPassword(event) {
+    event.preventDefault();
+    const token = document.getElementById('recoveryToken').value.trim();
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+    if (newPassword !== confirmPassword) {
+        showMessage('As senhas não coincidem.', 'error');
+        return;
+    }
+
+    setButtonLoading(event.target, true);
+    const result = await api('/api/recovery/reset', { token, new_password: newPassword });
+    setButtonLoading(event.target, false);
+
+    showMessage(result.message, result.ok ? 'success' : 'error');
+    if (result.ok) {
+        currentRecoveryToken = null;
+        switchForm('loginForm');
+    }
+}
+
+async function handleLogout() {
+    await api('/api/logout', {});
+    showMessage('Sessão encerrada com sucesso.', 'info');
+    switchForm('loginForm');
+}
+
+// ========== DASHBOARD ==========
+function showDashboard(user) {
+    document.getElementById('dashboardAvatar').textContent =
+        (user.username || 'U')[0].toUpperCase();
+    document.getElementById('dashboardUsername').textContent = user.username || '';
+    document.getElementById('dashboardEmail').textContent = user.email || '';
+    document.getElementById('dashboardLastLogin').textContent =
+        user.last_login ? formatDate(user.last_login) : 'Primeiro acesso';
+    document.getElementById('dashboardCreatedAt').textContent =
+        user.created_at ? formatDate(user.created_at) : '—';
+    switchForm('dashboardForm');
+}
+
+function formatDate(iso) {
+    try {
+        return new Date(iso).toLocaleString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+        });
+    } catch {
+        return iso;
+    }
+}
+
+// ========== ATTEMPT COUNTER ==========
+function updateAttemptCounter(attempts) {
+    const el = document.getElementById('attemptCounter');
+    if (!el || attempts == null) return;
+    if (attempts >= 5) {
+        el.textContent = 'Conta bloqueada. Use a recuperação de senha.';
+        el.className = 'attempt-counter blocked';
+    } else if (attempts > 0) {
+        el.textContent = `${attempts}/5 tentativas falhas — ${5 - attempts} restante(s).`;
+        el.className = 'attempt-counter';
+    } else {
+        el.textContent = '';
+    }
+}
+
+// ========== LOADING STATE ==========
+function setButtonLoading(form, loading) {
+    const btn = form.querySelector('button[type="submit"]');
+    if (!btn) return;
+    if (loading) {
+        btn.dataset.label = btn.textContent;
+        btn.textContent = '';
+        btn.classList.add('btn--loading');
+        btn.disabled = true;
+    } else {
+        btn.textContent = btn.dataset.label || btn.textContent;
+        btn.classList.remove('btn--loading');
+        btn.disabled = false;
+    }
+}
+
+// ========== THEME ==========
+function applyTheme() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('themeToggle').textContent = next === 'dark' ? '🌙' : '☀️';
+}
+
+// ========== UI HELPERS ==========
 function showMessage(message, type = 'info') {
     const alert = document.getElementById('messageAlert');
     alert.textContent = message;
@@ -38,7 +215,6 @@ function showMessage(message, type = 'info') {
     setTimeout(() => { alert.style.display = 'none'; }, 5000);
 }
 
-// ========== FORM MANAGEMENT ==========
 function switchForm(formId) {
     const current = document.querySelector('.form-container.active');
     const next = document.getElementById(formId);
@@ -68,208 +244,12 @@ function togglePassword(inputId) {
     input.type = input.type === 'password' ? 'text' : 'password';
 }
 
-// ========== VALIDATION ==========
-function isValidEmail(email) {
-    return EMAIL_PATTERN.test(email);
-}
-
-function isValidUsername(username) {
-    return USERNAME_PATTERN.test(username);
-}
-
-function validatePassword(password) {
-    if (password.length < MIN_PASSWORD_LENGTH) {
-        return 'A senha deve ter pelo menos 6 caracteres.';
-    }
-    if (!/[A-Z]/.test(password)) {
-        return 'A senha deve conter pelo menos uma letra maiúscula.';
-    }
-    if (!/[0-9]/.test(password)) {
-        return 'A senha deve conter pelo menos um número.';
-    }
-    return '';
-}
-
-function handleLogin(event) {
-    event.preventDefault();
-
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const users = getStoredUsers();
-
-    if (!username || !password) {
-        showMessage('Preencha todos os campos para fazer login.', 'error');
-        return;
-    }
-
-    if (!(username in users)) {
-        showMessage('Usuário não encontrado.', 'error');
-        return;
-    }
-
-    if (users[username].password !== password) {
-        showMessage('Nome de usuário ou senha incorretos.', 'error');
-        return;
-    }
-
-    showMessage(`Login realizado com sucesso! Bem-vindo, ${username}.`, 'success');
-}
-
-function handleRegister(event) {
-    event.preventDefault();
-
-    const username = document.getElementById('registerUsername').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const users = getStoredUsers();
-
-    if (!username || !email || !password || !confirmPassword) {
-        showMessage('Preencha todos os campos para se registrar.', 'error');
-        return;
-    }
-
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-        showMessage('Nome de usuário inválido. Use 3-20 caracteres, letras, números ou _.', 'error');
-        return;
-    }
-
-    if (!isValidEmail(email)) {
-        showMessage('Email inválido.', 'error');
-        return;
-    }
-
-    const passwordValidation = validatePassword(password);
-    if (passwordValidation) {
-        showMessage(passwordValidation, 'error');
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        showMessage('As senhas não coincidem.', 'error');
-        return;
-    }
-
-    if (username in users) {
-        showMessage('Nome de usuário já existe.', 'error');
-        return;
-    }
-
-    if (Object.values(users).some((user) => user.email === email)) {
-        showMessage('Email já cadastrado.', 'error');
-        return;
-    }
-
-    users[username] = {
-        email,
-        password
-    };
-
-    saveUsers(users);
-    showMessage(`Conta criada com sucesso para ${username}!`, 'success');
-    switchForm('loginForm');
-}
-
-function generateRecoveryCode() {
-    return Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 8);
-}
-
-function handleRecoveryInit(event) {
-    event.preventDefault();
-
-    const username = document.getElementById('recoveryUsername').value.trim();
-    const email = document.getElementById('recoveryEmail').value.trim();
-    const users = getStoredUsers();
-
-    if (!username || !email) {
-        showMessage('Preencha usuário e email para recuperar a senha.', 'error');
-        return;
-    }
-
-    if (!(username in users) || users[username].email !== email) {
-        showMessage('Usuário ou email incorreto.', 'error');
-        return;
-    }
-
-    const recoveryToken = generateRecoveryCode();
-    const expiration = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-
-    users[username].recovery = {
-        token: recoveryToken,
-        expires_at: expiration
-    };
-
-    saveUsers(users);
-    currentRecoveryToken = username;
-
-    const linkDisplay = document.getElementById('recoveryLinkDisplay');
-    linkDisplay.innerHTML = `
-        <p class="small">Link simulado enviado para <strong>${email}</strong>:</p>
-        <a href="#" onclick="applyRecoveryLink('${recoveryToken}')">https://example.com/redefinir-senha?token=${recoveryToken}</a>
-    `;
-
-    document.getElementById('recoveryMessage').textContent = `Link de redefinição enviado para ${email}. Use o código ou clique no link.`;
-    document.getElementById('recoveryStep1').style.display = 'none';
-    document.getElementById('recoveryStep2').style.display = 'block';
-}
-
 function applyRecoveryLink(token) {
-    const tokenInput = document.getElementById('recoveryToken');
-    if (tokenInput) {
-        tokenInput.value = token;
+    const input = document.getElementById('recoveryToken');
+    if (input) {
+        input.value = token;
         showMessage('Código de recuperação preenchido automaticamente.', 'success');
     }
-}
-
-function handleNewPassword(event) {
-    event.preventDefault();
-
-    const username = currentRecoveryToken;
-    const recoveryToken = document.getElementById('recoveryToken').value.trim();
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmNewPassword').value;
-    const users = getStoredUsers();
-
-    if (!username || !(username in users)) {
-        showMessage('Inicie o processo de recuperação novamente.', 'error');
-        resetRecovery();
-        return;
-    }
-
-    if (!recoveryToken || !newPassword || !confirmPassword) {
-        showMessage('Preencha todos os campos para redefinir a senha.', 'error');
-        return;
-    }
-
-    if (newPassword !== confirmPassword) {
-        showMessage('As senhas não coincidem.', 'error');
-        return;
-    }
-
-    const recovery = users[username].recovery;
-    if (!recovery || recovery.token !== recoveryToken) {
-        showMessage('Código de recuperação inválido.', 'error');
-        return;
-    }
-
-    if (new Date(recovery.expires_at) < new Date()) {
-        showMessage('O código de recuperação expirou.', 'error');
-        resetRecovery();
-        return;
-    }
-
-    const passwordValidation = validatePassword(newPassword);
-    if (passwordValidation) {
-        showMessage(passwordValidation, 'error');
-        return;
-    }
-
-    users[username].password = newPassword;
-    delete users[username].recovery;
-    saveUsers(users);
-    showMessage('Senha alterada com sucesso.', 'success');
-    currentRecoveryToken = null;
-    switchForm('loginForm');
 }
 
 function resetRecovery() {
@@ -281,11 +261,20 @@ function resetRecovery() {
     const tokenInput = document.getElementById('recoveryToken');
     if (tokenInput) tokenInput.value = '';
     document.getElementById('recoveryLinkDisplay').innerHTML = '';
-    document.getElementById('recoveryMessage').textContent = 'Verifique seu email para encontrar o link de redefinição.';
+    document.getElementById('recoveryMessage').textContent =
+        'Verifique seu email para encontrar o link de redefinição.';
 }
 
-switchForm('loginForm');
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
+// ========== STRENGTH INDICATOR ==========
 function updateStrengthIndicator(password) {
     const bar = document.getElementById('strengthBar');
     const label = document.getElementById('strengthLabel');
@@ -330,6 +319,7 @@ function updateChecklist(password) {
     });
 }
 
+// ========== RIPPLE ==========
 (function initRipple() {
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.btn');
@@ -345,3 +335,6 @@ function updateChecklist(password) {
         setTimeout(() => ripple.remove(), 600);
     });
 }());
+
+// ========== BOOT ==========
+init();
