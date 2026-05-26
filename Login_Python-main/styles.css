@@ -322,6 +322,7 @@ body::after {
 }
 
 .social-btn:hover {
+    background: rgba(59, 130, 246, 0.12);
     transform: translateY(-1px);
 }
 
@@ -329,27 +330,12 @@ body::after {
     color: #93c5fd;
 }
 
-.social-btn.facebook:hover {
-    background: #1877F2;
-    color: #ffffff;
-}
-
 .social-btn.google {
     color: #f8fafc;
 }
 
-.social-btn.google:hover {
-    background: #EA4335;
-    color: #ffffff;
-}
-
 .social-btn.apple {
-    color: #f8fafc;
-}
-
-.social-btn.apple:hover {
-    background: #ffffff;
-    color: #000000;
+    color: #d6d6d6;
 }
 
 .btn-primary:hover {
