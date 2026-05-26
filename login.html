@@ -10,15 +10,12 @@
 
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <h1>Bem-Vindo(a)</h1>
             <h2>Faça seu login / Cadastre-se</h2>
         </header>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Login Form -->
             <div class="form-container active" id="loginForm">
                 <form onsubmit="handleLogin(event)">
                     <div class="form-group">
@@ -80,7 +77,6 @@
                 </div>
             </div>
 
-            <!-- Register Form -->
             <div class="form-container" id="registerForm">
                 <h2>Criar Conta</h2>
                 <form onsubmit="handleRegister(event)">
@@ -141,7 +137,6 @@
                 </div>
             </div>
 
-            <!-- Recovery Form -->
             <div class="form-container" id="recoveryForm">
                 <h2>Recuperar Senha</h2>
                 <div id="recoveryStep1" class="recovery-step">
@@ -208,58 +203,11 @@
             <!-- Message Alert -->
             <div id="messageAlert" class="alert" style="display: none;"></div>
         </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p>&copy; 2024 SecureLogin. Todos os direitos reservados.</p>
-            <p>Sistema seguro com criptografia SHA-256</p>
+        <footer>
+        <p>&copy; 2024 SecureLogin. Todos os direitos reservados.</p>
+        <p>Sistema seguro com criptografia SHA-256</p>
         </footer>
     </div>
 
     <script src="login-script.js"></script>
-    <script>
-        (function () {
-            const card = document.querySelector('.container');
-            const MAX_TILT = 6;
-            const EASE = 0.12;
-            let targetX = 0;
-            let targetY = 0;
-            let currentX = 0;
-            let currentY = 0;
-
-            function updateCard() {
-                currentX += (targetX - currentX) * EASE;
-                currentY += (targetY - currentY) * EASE;
-
-                card.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg) translateZ(0)`;
-                card.style.boxShadow = `
-                    ${-currentY * 2}px ${currentX * 2}px 10px rgba(0,0,0,0.08),
-                    ${-currentY * 4}px ${currentX * 4}px 28px rgba(0,0,0,0.12),
-                    ${-currentY * 6}px ${currentX * 6}px 62px rgba(79,70,229,0.22),
-                    0 48px 90px rgba(0,0,0,0.10)
-                `;
-
-                requestAnimationFrame(updateCard);
-            }
-
-            document.body.addEventListener('mousemove', function (e) {
-                const rect = card.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-                const dx = (e.clientX - cx) / (window.innerWidth / 2);
-                const dy = (e.clientY - cy) / (window.innerHeight / 2);
-                targetX = -dy * MAX_TILT;
-                targetY = dx * MAX_TILT;
-            });
-
-            document.body.addEventListener('mouseleave', function () {
-                targetX = 0;
-                targetY = 0;
-            });
-
-            requestAnimationFrame(updateCard);
-        })();
-    </script>
-</body>
-
 </html>

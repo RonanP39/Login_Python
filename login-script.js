@@ -1,6 +1,11 @@
 const STORAGE_KEY = 'secureLoginUsers';
+const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
+const MIN_PASSWORD_LENGTH = 6;
+
 let currentRecoveryToken = null;
 
+// ========== LOCAL STORAGE ==========
 function getStoredUsers() {
     try {
         const json = localStorage.getItem(STORAGE_KEY);
@@ -15,6 +20,7 @@ function saveUsers(users) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
 }
 
+// ========== UI NOTIFICATIONS ==========
 function showMessage(message, type = 'info') {
     const alert = document.getElementById('messageAlert');
     alert.textContent = message;
@@ -24,8 +30,6 @@ function showMessage(message, type = 'info') {
     if (type === 'error') {
         const activeForm = document.querySelector('.form-container.active');
         if (activeForm) {
-            activeForm.classList.remove('shake');
-            void activeForm.offsetWidth;
             activeForm.classList.add('shake');
             setTimeout(() => activeForm.classList.remove('shake'), 550);
         }
@@ -34,13 +38,12 @@ function showMessage(message, type = 'info') {
     setTimeout(() => { alert.style.display = 'none'; }, 5000);
 }
 
+// ========== FORM MANAGEMENT ==========
 function switchForm(formId) {
     const current = document.querySelector('.form-container.active');
     const next = document.getElementById(formId);
 
-    document.querySelectorAll('.recovery-step').forEach((step) => {
-        step.style.display = 'none';
-    });
+    document.querySelectorAll('.recovery-step').forEach(step => step.style.display = 'none');
     if (formId === 'recoveryForm') {
         document.getElementById('recoveryStep1').style.display = 'block';
     }
@@ -65,12 +68,17 @@ function togglePassword(inputId) {
     input.type = input.type === 'password' ? 'text' : 'password';
 }
 
-function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// ========== VALIDATION ==========
+function isValidEmail(email) {
+    return EMAIL_PATTERN.test(email);
+}
+
+function isValidUsername(username) {
+    return USERNAME_PATTERN.test(username);
 }
 
 function validatePassword(password) {
-    if (password.length < 6) {
+    if (password.length < MIN_PASSWORD_LENGTH) {
         return 'A senha deve ter pelo menos 6 caracteres.';
     }
     if (!/[A-Z]/.test(password)) {
@@ -126,7 +134,7 @@ function handleRegister(event) {
         return;
     }
 
-    if (!validateEmail(email)) {
+    if (!isValidEmail(email)) {
         showMessage('Email inválido.', 'error');
         return;
     }
